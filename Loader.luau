@@ -22,6 +22,8 @@ local BASE_URL = string.format(
 -- REGISTO DE JOGOS SUPORTADOS
 local SUPPORTED_GAMES: { [number]: string } = {
     [124721731495884] = "Games/mathsoccerplayer.luau",
+    [110730550789828] = "Games/ChopTrees.luau",
+
     
 }
 
