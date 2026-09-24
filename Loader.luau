@@ -1,8 +1,6 @@
 --!strict
--- [LOADER PRINCIPAL - TEXHUB]
+-- [LOADER PRINCIPAL - TEXHUB APEX V3]
 local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
-
 local LocalPlayer = Players.LocalPlayer
 assert(LocalPlayer, "LocalPlayer não inicializado.")
 
@@ -19,29 +17,29 @@ local BASE_URL = string.format(
     REPO_CONFIG.Branch
 )
 
--- REGISTO DE JOGOS SUPORTADOS
+-- REGISTO DOS JOGOS
 local SUPPORTED_GAMES: { [number]: string } = {
     [124721731495884] = "Games/mathsoccerplayer.luau",
     [110730550789828] = "Games/ChopTrees.luau",
-
-    
 }
 
-
 local function FetchModule(path: string): ((...any) -> any)?
-    local fullUrl = BASE_URL .. path
+    -- Anti-Cache: Impede que o GitHub entregue páginas antigas ou 404
+    local cacheBuster = "?t=" .. tostring(os.time())
+    local fullUrl = BASE_URL .. path .. cacheBuster
+
     local fetchSuccess, sourceCode = pcall(function()
         return game:HttpGet(fullUrl)
     end)
 
-    if not fetchSuccess or not sourceCode or sourceCode == "404: Not Found" then
-        warn(string.format("[TEXHUB] Arquivo não encontrado: %s", fullUrl))
+    if not fetchSuccess or not sourceCode or string.find(sourceCode, "404: Not Found") then
+        warn(string.format("[TEXHUB] Falha ao baixar módulo: %s", path))
         return nil
     end
 
     local loadSuccess, executable = pcall(loadstring, sourceCode)
     if not loadSuccess or type(executable) ~= "function" then
-        warn(string.format("[TEXHUB] Erro de sintaxe: %s", path))
+        warn(string.format("[TEXHUB] Erro de sintaxe no arquivo %s: %s", path, tostring(executable)))
         return nil
     end
 
@@ -49,8 +47,6 @@ local function FetchModule(path: string): ((...any) -> any)?
 end
 
 local function Initialize()
-    print("[TEXHUB] Conectando ao repositório...")
-    
     local currentPlaceId = game.PlaceId
     local gameScriptPath = SUPPORTED_GAMES[currentPlaceId] or "Games/Universal.luau"
 
@@ -58,9 +54,12 @@ local function Initialize()
 
     local runScript = FetchModule(gameScriptPath)
     if runScript then
-        pcall(runScript)
+        local success, err = pcall(runScript)
+        if not success then
+            warn(string.format("[TEXHUB ERRO DE EXECUÇÃO]: %s", tostring(err)))
+        end
     else
-        warn("[TEXHUB] Falha ao inicializar módulo.")
+        warn("[TEXHUB] Módulo indisponível no momento.")
     end
 end
 
