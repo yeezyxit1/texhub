@@ -12,7 +12,7 @@ local LocalPlayer = Players.LocalPlayer
 assert(LocalPlayer, "LocalPlayer indisponível.")
 
 -- Importação da Engine Visual TexHub Apex v3
-local TexHub = loadstring(game:HttpGet("https://raw.githubusercontent.com/yeezyxit1/texhub/main/UI.luau"))()
+local TexHub = loadstring(game:HttpGet("https://raw.githubusercontent.com/yeezyxit1/texhub/main/UI.luau?t=" .. tostring(os.time())))()
 local Hub = TexHub.CreateWindow("TEXHUB APEX", "+1 CHOP TREES")
 
 Hub:Notify({
