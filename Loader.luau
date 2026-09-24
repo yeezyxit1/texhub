@@ -1,22 +1,17 @@
 --!strict
--- [UNIVERSAL HUB LOADER - DELTA MOBILE]
--- Objetivo: Identificar PlaceId, carregar dependências da nuvem e despachar execução.
-
+-- [LOADER PRINCIPAL - TEXHUB]
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 assert(LocalPlayer, "LocalPlayer não inicializado.")
 
--- ========================================================
--- MODIFIQUE APENAS ESTAS DUAS LINHAS ABAIXO:
--- ========================================================
+-- CONFIGURAÇÃO VINCULADA AO SEU GITHUB
 local REPO_CONFIG = {
-    Owner = "SEU_USUARIO_GITHUB",      -- Coloque seu nick do GitHub entre as aspas
-    Repository = "NOME_DO_REPOSITORIO", -- Coloque o nome exato do repo entre as aspas
+    Owner = "yeezyxit1",
+    Repository = "texhub",
     Branch = "main"
 }
--- ========================================================
 
 local BASE_URL = string.format(
     "https://raw.githubusercontent.com/%s/%s/%s/",
@@ -25,13 +20,12 @@ local BASE_URL = string.format(
     REPO_CONFIG.Branch
 )
 
--- ROTEAMENTO DE JOGOS POR PLACEID
+-- ROTAS DE JOGOS POR ID
 local SUPPORTED_GAMES: { [number]: string } = {
-    -- [PlaceId] = "Caminho do Arquivo no Repositório"
-    -- Exemplo: [123456789] = "Games/SoccerMath.luau"
+    -- Aqui adicionaremos os PlaceIds específicos no futuro
 }
 
--- FUNÇÃO ROBUSTA DE REQUISIÇÃO E EXECUÇÃO
+-- DOWNLOAD E EXECUÇÃO
 local function FetchModule(path: string): ((...any) -> any)?
     local fullUrl = BASE_URL .. path
     local fetchSuccess, sourceCode = pcall(function()
@@ -39,13 +33,13 @@ local function FetchModule(path: string): ((...any) -> any)?
     end)
 
     if not fetchSuccess or not sourceCode or sourceCode == "404: Not Found" then
-        warn(string.format("[LOADER] Falha ao baixar módulo: %s", fullUrl))
+        warn(string.format("[TEXHUB] Arquivo não encontrado: %s", fullUrl))
         return nil
     end
 
     local loadSuccess, executable = pcall(loadstring, sourceCode)
     if not loadSuccess or type(executable) ~= "function" then
-        warn(string.format("[LOADER] Erro de sintaxe em: %s | %s", path, tostring(executable)))
+        warn(string.format("[TEXHUB] Erro de sintaxe: %s", path))
         return nil
     end
 
@@ -54,27 +48,16 @@ end
 
 -- INICIALIZAÇÃO
 local function Initialize()
-    print("[HUB] Conectando ao repositório central...")
+    print("[TEXHUB] Conectando ao repositório...")
     
     local currentPlaceId = game.PlaceId
     local gameScriptPath = SUPPORTED_GAMES[currentPlaceId] or "Games/Universal.luau"
-    
-    print(string.format("[HUB] PlaceId: %d | Rota: %s", currentPlaceId, gameScriptPath))
 
     local runScript = FetchModule(gameScriptPath)
     if runScript then
-        local execSuccess, runtimeErr = pcall(runScript, {
-            BaseUrl = BASE_URL,
-            Fetch = FetchModule
-        })
-        
-        if not execSuccess then
-            warn(string.format("[HUB] Erro de execução: %s", tostring(runtimeErr)))
-        else
-            print("[HUB] Módulo executado com sucesso!")
-        end
+        pcall(runScript)
     else
-        warn("[HUB] Falha crítica: Módulo inacessível.")
+        warn("[TEXHUB] Falha ao inicializar módulo.")
     end
 end
 
