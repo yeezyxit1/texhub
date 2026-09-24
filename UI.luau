@@ -1,6 +1,6 @@
 --!strict
 -- ========================================================
--- [TEXHUB APEX ENGINE v3.2 - ADVANCED GLOBAL COMPONENT SUITE]
+-- [TEXHUB APEX ENGINE v3.5 - INTEGRATED AI SUITE]
 -- ========================================================
 
 local TweenService = game:GetService("TweenService")
@@ -8,6 +8,7 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Stats = game:GetService("Stats")
 local CoreGui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 
 local LocalPlayer = Players.LocalPlayer
@@ -30,9 +31,12 @@ local C = {
     Card   = Color3.fromRGB(23, 27, 39),
     Stroke = Color3.fromRGB(38, 45, 65),
     Neon   = Color3.fromRGB(0, 255, 170),
+    AI_Glow= Color3.fromRGB(0, 200, 255),
     Txt    = Color3.fromRGB(245, 248, 255),
     Muted  = Color3.fromRGB(140, 150, 175),
     Off    = Color3.fromRGB(35, 41, 58),
+    UserBubble = Color3.fromRGB(30, 36, 52),
+    AIBubble   = Color3.fromRGB(16, 26, 36)
 }
 
 local TexHub = {}
@@ -50,6 +54,9 @@ local function AddStroke(p: Instance, col: Color3, t: number)
     s.Thickness = t
     s.Parent = p
 end
+
+-- Detetor de função HTTP do executor
+local HttpRequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
 
 function TexHub.CreateWindow(hubTitle: string, subtitle: string)
     local self = setmetatable({}, TexHub)
@@ -70,7 +77,6 @@ function TexHub.CreateWindow(hubTitle: string, subtitle: string)
     NLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
     NLayout.Padding = UDim.new(0, 8)
     NLayout.Parent = NotifyHolder
-
     self.NotifyHolder = NotifyHolder
 
     local Badge = Instance.new("TextButton")
@@ -335,7 +341,6 @@ function TexHub:CreateTab(name: string, icon: string?)
 
     tabSelf.Page = Page
 
-    -- DIVISOR DE SECÇÃO
     function tabSelf:AddSection(title: string)
         local SecFrame = Instance.new("Frame")
         SecFrame.Size = UDim2.new(1, 0, 0, 20)
@@ -353,7 +358,6 @@ function TexHub:CreateTab(name: string, icon: string?)
         SecLabel.Parent = SecFrame
     end
 
-    -- TOGGLE
     function tabSelf:AddToggle(title: string, desc: string, default: boolean, callback: (boolean) -> ())
         local state = default or false
         local Card = Instance.new("Frame")
@@ -408,49 +412,6 @@ function TexHub:CreateTab(name: string, icon: string?)
         end)
     end
 
-    -- CAMPO DE TEXTO / INPUT BOX
-    function tabSelf:AddInput(title: string, placeholder: string, callback: (string) -> ())
-        local Card = Instance.new("Frame")
-        Card.Size = UDim2.new(1, 0, 0, 44)
-        Card.BackgroundColor3 = C.Card
-        Card.Parent = Page
-        AddCorner(Card, 8)
-        AddStroke(Card, C.Stroke, 1)
-
-        local T = Instance.new("TextLabel")
-        T.Size = UDim2.new(0.5, 0, 1, 0)
-        T.Position = UDim2.new(0, 10, 0, 0)
-        T.BackgroundTransparency = 1
-        T.Font = Enum.Font.GothamBold
-        T.Text = title
-        T.TextSize = 10
-        T.TextColor3 = C.Txt
-        T.TextXAlignment = Enum.TextXAlignment.Left
-        T.Parent = Card
-
-        local Box = Instance.new("TextBox")
-        Box.Size = UDim2.new(0.45, 0, 0, 26)
-        Box.Position = UDim2.new(0.52, 0, 0.5, -13)
-        Box.BackgroundColor3 = C.Side
-        Box.Text = ""
-        Box.PlaceholderText = placeholder
-        Box.PlaceholderColor3 = C.Muted
-        Box.Font = Enum.Font.GothamMedium
-        Box.TextSize = 9
-        Box.TextColor3 = C.Neon
-        Box.ClearTextOnFocus = false
-        Box.Parent = Card
-        AddCorner(Box, 6)
-        AddStroke(Box, C.Stroke, 1)
-
-        Box.FocusLost:Connect(function(enter)
-            if enter then
-                callback(Box.Text)
-            end
-        end)
-    end
-
-    -- SLIDER
     function tabSelf:AddSlider(title: string, min: number, max: number, default: number, callback: (number) -> ())
         local val = math.clamp(default or min, min, max)
         local Card = Instance.new("Frame")
@@ -523,7 +484,6 @@ function TexHub:CreateTab(name: string, icon: string?)
         end)
     end
 
-    -- BOTÃO DE AÇÃO
     function tabSelf:AddButton(title: string, callback: () -> ())
         local Btn = Instance.new("TextButton")
         Btn.Size = UDim2.new(1, 0, 0, 34)
@@ -547,4 +507,60 @@ function TexHub:CreateTab(name: string, icon: string?)
     return tabSelf
 end
 
-return TexHub
+-- ========================================================
+-- [MÓDULO NATIVO TEXAI COPILOT]
+-- ========================================================
+function TexHub:CreateAIAssistant(systemPrompt: string?, commandCallback: ((string) -> string?)?)
+    local tab = self:CreateTab("TexAI", "🤖")
+    local Page = tab.Page
+
+    local StatusCard = Instance.new("Frame")
+    StatusCard.Size = UDim2.new(1, 0, 0, 24)
+    StatusCard.BackgroundColor3 = C.AIBubble
+    StatusCard.Parent = Page
+    AddCorner(StatusCard, 6)
+    AddStroke(StatusCard, C.AI_Glow, 1)
+
+    local StatusText = Instance.new("TextLabel")
+    StatusText.Size = UDim2.new(1, -16, 1, 0)
+    StatusText.Position = UDim2.new(0, 8, 0, 0)
+    StatusText.BackgroundTransparency = 1
+    StatusText.Font = Enum.Font.GothamBold
+    StatusText.Text = "● TEXAI COPILOT ONLINE [ASSISTENTE ATIVO]"
+    StatusText.TextSize = 9
+    StatusText.TextColor3 = C.AI_Glow
+    StatusText.TextXAlignment = Enum.TextXAlignment.Left
+    StatusText.Parent = StatusCard
+
+    local ChatBox = Instance.new("ScrollingFrame")
+    ChatBox.Size = UDim2.new(1, 0, 0, 140)
+    ChatBox.BackgroundColor3 = C.Side
+    ChatBox.BorderSizePixel = 0
+    ChatBox.ScrollBarThickness = 2
+    ChatBox.ScrollBarImageColor3 = C.AI_Glow
+    ChatBox.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    ChatBox.Parent = Page
+    AddCorner(ChatBox, 8)
+
+    local CList = Instance.new("UIListLayout")
+    CList.Padding = UDim.new(0, 6)
+    CList.Parent = ChatBox
+
+    local CPadding = Instance.new("UIPadding")
+    CPadding.PaddingTop = UDim.new(0, 6)
+    CPadding.PaddingBottom = UDim.new(0, 6)
+    CPadding.PaddingLeft = UDim.new(0, 6)
+    CPadding.PaddingRight = UDim.new(0, 6)
+    CPadding.Parent = ChatBox
+
+    local function AppendMessage(sender: string, text: string)
+        local isAI = sender == "TexAI"
+        local Bubble = Instance.new("Frame")
+        Bubble.Size = UDim2.new(1, 0, 0, 0)
+        Bubble.BackgroundColor3 = isAI and C.AIBubble or C.UserBubble
+        Bubble.AutomaticSize = Enum.AutomaticSize.Y
+        Bubble.Parent = ChatBox
+        AddCorner(Bubble, 6)
+        AddStroke(Bubble, isAI and C.AI_Glow or C.Stroke, 1)
+
+        local Label = Instance.new("TextLabel"
