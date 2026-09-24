@@ -34,18 +34,7 @@ local Window = TexHub:CreateWindow({
 local Tab = Window:CreateTab("Principal")
 
 
-if not uiSuccess or not uiCode or string.find(uiCode, "404") then return end
-local loadFunc = loadstring(uiCode)
-if not loadFunc then return end
-local TexHub = loadFunc()
 
-local Hub = TexHub.CreateWindow("TEXHUB APEX", "WALL BREAKER ELITE")
-
-Hub:Notify({
-    Title = "TEXHUB INJETADO",
-    Content = "Menu carregado com sucesso!",
-    Duration = 3.5
-})
 
 -- REMOTES COM TIMEOUT SEGURO (NÃO TRAVA NO TUTORIAL)
 local ClickTrainEvent = ReplicatedStorage:WaitForChild("ClickTrainEvent", 5) :: RemoteEvent?
