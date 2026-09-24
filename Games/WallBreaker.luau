@@ -11,32 +11,39 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 assert(LocalPlayer, "LocalPlayer indisponível.")
 
--- Importação da UI blindada contra 404 e Cache
+-- Carregamento do motor gráfico TexHub
 local UI_URL = "https://raw.githubusercontent.com/yeezyxit1/texhub/main/UI.luau?t=" .. tostring(os.time())
-local rawCode = game:HttpGet(UI_URL)
+local rawUI = game:HttpGet(UI_URL)
 
-if not rawCode or string.find(rawCode, "404: Not Found") then
-    warn("[TEXHUB] Erro 404: Ficheiro UI.luau não encontrado no URL especificado.")
-    return
-end
-
-local loadFunc, compileErr = loadstring(rawCode)
-if not loadFunc then
-    warn("[TEXHUB] Erro ao compilar UI.luau: " .. tostring(compileErr))
-    return
-end
+local loadFunc = loadstring(rawUI)
+assert(loadFunc, "Falha ao compilar a biblioteca de interface.")
 
 local TexHub = loadFunc()
 
--- Criação da Janela compatível com a biblioteca TexHub Apex
+-- Criação da Janela compatível
 local Hub = nil
-local success, res = pcall(function()
-    return TexHub:CreateWindow({
+local ok, res = pcall(function()
+    return TexHub.CreateWindow("TEXHUB APEX", "WALL BREAKER")
+end)
+
+if ok and res then
+    Hub = res
+elseif type(TexHub.CreateWindow) == "function" then
+    Hub = TexHub:CreateWindow({
         Title = "TexHub | Wall Breaker",
         SubTitle = "Mobile Edition",
         Size = UDim2.new(0, 320, 0, 240)
     })
-end)
+end
+
+if Hub and Hub.Notify then
+    Hub:Notify({
+        Title = "TEXHUB INJETADO",
+        Content = "Menu carregado com sucesso!",
+        Duration = 3.5
+    })
+end
+
 
 if success and res then
     Hub = res
