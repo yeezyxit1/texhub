@@ -11,10 +11,28 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 assert(LocalPlayer, "LocalPlayer indisponível.")
 
--- Importação da UI
-local uiSuccess, uiCode = pcall(function()
-    return game:HttpGet("https://raw.githubusercontent.com/yeezyxit1/texhub/main/UI.luau?t=" .. tostring(os.time()))
+-- Importação da UI sem cache
+local uiSuccess, uiLib = pcall(function()
+    local url = "https://raw.githubusercontent.com/yeezyxit1/texhub/main/UI.luau?t=" .. tostring(os.time())
+    return loadstring(game:HttpGet(url))()
 end)
+
+if not uiSuccess or not uiLib then
+    warn("Falha ao carregar TexHub UI: " .. tostring(uiLib))
+    return
+end
+
+local TexHub = uiLib
+
+-- Criação da Janela
+local Window = TexHub:CreateWindow({
+    Title = "TexHub | Wall Breaker",
+    SubTitle = "Mobile Edition",
+    Size = UDim2.new(0, 320, 0, 240)
+})
+
+local Tab = Window:CreateTab("Principal")
+
 
 if not uiSuccess or not uiCode or string.find(uiCode, "404") then return end
 local loadFunc = loadstring(uiCode)
