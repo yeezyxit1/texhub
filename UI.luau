@@ -14,12 +14,9 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 assert(LocalPlayer, "LocalPlayer indisponível.")
 
-local ParentGui: Instance = CoreGui
-pcall(function()
-    if not pcall(function() return CoreGui.Name end) then
-        ParentGui = LocalPlayer:WaitForChild("PlayerGui")
-    end
-end)
+-- Força o desenho no PlayerGui para funcionar no Delta Mobile
+local ParentGui: Instance = LocalPlayer:WaitForChild("PlayerGui")
+
 
 if ParentGui:FindFirstChild("TexHub_Apex_V3") then
     ParentGui.TexHub_Apex_V3:Destroy()
