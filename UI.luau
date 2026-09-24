@@ -14,8 +14,24 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 assert(LocalPlayer, "LocalPlayer indisponível.")
 
--- Força o desenho no PlayerGui para funcionar no Delta Mobile
-local ParentGui: Instance = LocalPlayer:WaitForChild("PlayerGui")
+local ParentGui: Instance = nil
+
+pcall(function()
+    if gethui then
+        ParentGui = gethui()
+    elseif syn and syn.protect_gui then
+        local gui = Instance.new("Folder")
+        syn.protect_gui(gui)
+        gui.Parent = CoreGui
+        ParentGui = gui
+    else
+        ParentGui = LocalPlayer:WaitForChild("PlayerGui")
+    end
+end)
+
+if not ParentGui then
+    ParentGui = LocalPlayer:WaitForChild("PlayerGui")
+end
 
 
 if ParentGui:FindFirstChild("TexHub_Apex_V3") then
