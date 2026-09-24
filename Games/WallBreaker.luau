@@ -45,19 +45,7 @@ if Hub and Hub.Notify then
 end
 
 
-if success and res then
-    Hub = res
-elseif type(TexHub.CreateWindow) == "function" then
-    Hub = TexHub.CreateWindow("TEXHUB APEX", "WALL BREAKER ELITE")
-end
 
-if Hub and Hub.Notify then
-    Hub:Notify({
-        Title = "TEXHUB APEX",
-        Content = "Menu injetado com sucesso!",
-        Duration = 3
-    })
-end
 
 
 
