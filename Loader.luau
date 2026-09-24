@@ -22,7 +22,9 @@ local BASE_URL = string.format(
 -- REGISTO DE JOGOS SUPORTADOS
 local SUPPORTED_GAMES: { [number]: string } = {
     [124721731495884] = "Games/mathsoccerplayer.luau",
+    [86943068337855]  = "Games/DrillBlocks.luau",
 }
+
 
 local function FetchModule(path: string): ((...any) -> any)?
     local fullUrl = BASE_URL .. path
