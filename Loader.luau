@@ -77,6 +77,8 @@ local BASE_URL = string.format(
 local SUPPORTED_GAMES: { [number]: string } = {
     [124721731495884] = "Games/mathsoccerplayer.luau",
     [110730550789828] = "Games/ChopTrees.luau",
+    [74889851913797]  = "Games/WallBreaker.luau",
+
 }
 
 local function FetchModule(path: string): ((...any) -> any)?
