@@ -1,0 +1,39 @@
+--!strict
+-- [TEXHUB CORE - CONFIG MANAGER]
+local HttpService = game:GetService("HttpService")
+
+local ConfigManager = {}
+ConfigManager.__index = ConfigManager
+
+local FOLDER_NAME = "TexHubData"
+
+local function EnsureFolder()
+    if makefolder and not isfolder(FOLDER_NAME) then
+        makefolder(FOLDER_NAME)
+    end
+end
+
+function ConfigManager.Save(gameKey: string, data: { [string]: any })
+    EnsureFolder()
+    if writefile then
+        local success, encoded = pcall(HttpService.JSONEncode, HttpService, data)
+        if success then
+            writefile(string.format("%s/%s.json", FOLDER_NAME, gameKey), encoded)
+        end
+    end
+end
+
+function ConfigManager.Load(gameKey: string): { [string]: any }
+    EnsureFolder()
+    local path = string.format("%s/%s.json", FOLDER_NAME, gameKey)
+    if isfile and isfile(path) and readfile then
+        local raw = readfile(path)
+        local success, decoded = pcall(HttpService.JSONDecode, HttpService, raw)
+        if success and typeof(decoded) == "table" then
+            return decoded
+        end
+    end
+    return {}
+end
+
+return ConfigManager
