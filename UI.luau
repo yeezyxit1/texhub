@@ -1,5 +1,8 @@
 --!strict
--- [TEXHUB APEX ENGINE v3.0 - COMPACT RUNTIME]
+-- ========================================================
+-- [TEXHUB APEX ENGINE v3.2 - ADVANCED GLOBAL COMPONENT SUITE]
+-- ========================================================
+
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -22,14 +25,14 @@ if ParentGui:FindFirstChild("TexHub_Apex_V3") then
 end
 
 local C = {
-    Bg = Color3.fromRGB(13, 15, 22),
-    Side = Color3.fromRGB(18, 21, 30),
-    Card = Color3.fromRGB(23, 27, 39),
+    Bg     = Color3.fromRGB(13, 15, 22),
+    Side   = Color3.fromRGB(18, 21, 30),
+    Card   = Color3.fromRGB(23, 27, 39),
     Stroke = Color3.fromRGB(38, 45, 65),
-    Neon = Color3.fromRGB(0, 255, 170),
-    Txt = Color3.fromRGB(245, 248, 255),
-    Muted = Color3.fromRGB(140, 150, 175),
-    Off = Color3.fromRGB(35, 41, 58),
+    Neon   = Color3.fromRGB(0, 255, 170),
+    Txt    = Color3.fromRGB(245, 248, 255),
+    Muted  = Color3.fromRGB(140, 150, 175),
+    Off    = Color3.fromRGB(35, 41, 58),
 }
 
 local TexHub = {}
@@ -332,6 +335,25 @@ function TexHub:CreateTab(name: string, icon: string?)
 
     tabSelf.Page = Page
 
+    -- DIVISOR DE SECÇÃO
+    function tabSelf:AddSection(title: string)
+        local SecFrame = Instance.new("Frame")
+        SecFrame.Size = UDim2.new(1, 0, 0, 20)
+        SecFrame.BackgroundTransparency = 1
+        SecFrame.Parent = Page
+
+        local SecLabel = Instance.new("TextLabel")
+        SecLabel.Size = UDim2.new(1, 0, 1, 0)
+        SecLabel.BackgroundTransparency = 1
+        SecLabel.Font = Enum.Font.GothamBlack
+        SecLabel.Text = string.upper(title)
+        SecLabel.TextSize = 9
+        SecLabel.TextColor3 = C.Neon
+        SecLabel.TextXAlignment = Enum.TextXAlignment.Left
+        SecLabel.Parent = SecFrame
+    end
+
+    -- TOGGLE
     function tabSelf:AddToggle(title: string, desc: string, default: boolean, callback: (boolean) -> ())
         local state = default or false
         local Card = Instance.new("Frame")
@@ -386,6 +408,49 @@ function TexHub:CreateTab(name: string, icon: string?)
         end)
     end
 
+    -- CAMPO DE TEXTO / INPUT BOX
+    function tabSelf:AddInput(title: string, placeholder: string, callback: (string) -> ())
+        local Card = Instance.new("Frame")
+        Card.Size = UDim2.new(1, 0, 0, 44)
+        Card.BackgroundColor3 = C.Card
+        Card.Parent = Page
+        AddCorner(Card, 8)
+        AddStroke(Card, C.Stroke, 1)
+
+        local T = Instance.new("TextLabel")
+        T.Size = UDim2.new(0.5, 0, 1, 0)
+        T.Position = UDim2.new(0, 10, 0, 0)
+        T.BackgroundTransparency = 1
+        T.Font = Enum.Font.GothamBold
+        T.Text = title
+        T.TextSize = 10
+        T.TextColor3 = C.Txt
+        T.TextXAlignment = Enum.TextXAlignment.Left
+        T.Parent = Card
+
+        local Box = Instance.new("TextBox")
+        Box.Size = UDim2.new(0.45, 0, 0, 26)
+        Box.Position = UDim2.new(0.52, 0, 0.5, -13)
+        Box.BackgroundColor3 = C.Side
+        Box.Text = ""
+        Box.PlaceholderText = placeholder
+        Box.PlaceholderColor3 = C.Muted
+        Box.Font = Enum.Font.GothamMedium
+        Box.TextSize = 9
+        Box.TextColor3 = C.Neon
+        Box.ClearTextOnFocus = false
+        Box.Parent = Card
+        AddCorner(Box, 6)
+        AddStroke(Box, C.Stroke, 1)
+
+        Box.FocusLost:Connect(function(enter)
+            if enter then
+                callback(Box.Text)
+            end
+        end)
+    end
+
+    -- SLIDER
     function tabSelf:AddSlider(title: string, min: number, max: number, default: number, callback: (number) -> ())
         local val = math.clamp(default or min, min, max)
         local Card = Instance.new("Frame")
@@ -458,6 +523,7 @@ function TexHub:CreateTab(name: string, icon: string?)
         end)
     end
 
+    -- BOTÃO DE AÇÃO
     function tabSelf:AddButton(title: string, callback: () -> ())
         local Btn = Instance.new("TextButton")
         Btn.Size = UDim2.new(1, 0, 0, 34)
