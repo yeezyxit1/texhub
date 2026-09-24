@@ -11,8 +11,28 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 assert(LocalPlayer, "LocalPlayer indisponível.")
 
--- Importação da Engine Visual TexHub Apex v3
-local TexHub = loadstring(game:HttpGet("https://raw.githubusercontent.com/yeezyxit1/texhub/main/UI.luau?t=" .. tostring(os.time())))()
+-- Carregamento seguro da UI com verificação de erros
+local uiSuccess, uiCode = pcall(function()
+    return game:HttpGet("https://raw.githubusercontent.com/yeezyxit1/texhub/main/UI.luau?t=" .. tostring(os.time()))
+end)
+
+if not uiSuccess or not uiCode or string.find(uiCode, "404") then
+    warn("[TEXHUB] ERRO CRÍTICO: O arquivo 'UI.luau' não foi encontrado no GitHub. Verifique se o nome está exato.")
+    return
+end
+
+local loadFunc, loadErr = loadstring(uiCode)
+if not loadFunc then
+    warn("[TEXHUB] Erro de sintaxe no UI.luau: " .. tostring(loadErr))
+    return
+end
+
+local TexHub = loadFunc()
+if not TexHub or type(TexHub) ~= "table" then
+    warn("[TEXHUB] Erro: A biblioteca UI.luau não retornou uma tabela válida.")
+    return
+end
+
 local Hub = TexHub.CreateWindow("TEXHUB APEX", "+1 CHOP TREES")
 
 Hub:Notify({
