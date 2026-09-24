@@ -19,12 +19,10 @@ local BASE_URL = string.format(
     REPO_CONFIG.Branch
 )
 
--- REGISTO DO JOGO PELO ID
+-- REGISTO DE JOGOS SUPORTADOS
 local SUPPORTED_GAMES: { [number]: string } = {
     [124721731495884] = "Games/mathsoccerplayer.luau",
-    [72520553708667] = "Games/SkateToBrainrots.luau",
 }
-
 
 local function FetchModule(path: string): ((...any) -> any)?
     local fullUrl = BASE_URL .. path
