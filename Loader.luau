@@ -80,6 +80,7 @@ local SUPPORTED_GAMES: { [number]: string } = {
     [74889851913797]  = "Games/WallBreaker.luau",
     [128448883585036] = "Games/SkinnyPerStep.luau",
     [92648272637932] = "Games/PowerSim.luau",
+    [79268393072444] = "Games/OrchardTycoon.luau",
 
 }
 
