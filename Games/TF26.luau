@@ -1,5 +1,5 @@
 -- ============================================================================
--- [TEXHUB APEX v8.0 - TF26 TRUE BALL HITBOX & STEALTH REACH]
+-- [TEXHUB APEX v8.5 - TF26 SAFE HITBOX & HITBOXHANDLER COMPATIBLE]
 -- ============================================================================
 
 local Players = game:GetService("Players")
@@ -8,22 +8,23 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
+local Camera = Workspace.CurrentCamera
 
--- 1. CARREGAMENTO DO MOTOR TEXHUB NATIVO
+-- 1. MOTOR GRÁFICO TEXHUB
 local TexHub = loadstring(game:HttpGet("https://raw.githubusercontent.com/yeezyxit1/texhub/main/UI.luau?t=" .. tostring(os.time())))()
 
 local Window = TexHub:CreateWindow({
-    Title = "TEXHUB APEX <font color='#00FFAA'>[TF26 Elite]</font>"
+    Title = "TEXHUB APEX <font color='#00FFAA'>[TF26 Pro v8.5]</font>"
 })
 
--- 2. CONFIGURAÇÕES E ESTADOS
+-- 2. ESTADOS
 local Settings = {
     HitboxActive = false,
-    HitboxSize = 14,
+    HitboxSize = 12,
     ShowHitboxRadius = false,
 
-    AutoTouchMagnet = true, -- Disparo de toque físico garantido
-    MagnetRange = 12,
+    AutoTouchMagnet = true,
+    MagnetRange = 10,
 
     WalkSpeed = 16,
     JumpPower = 50,
@@ -32,7 +33,7 @@ local Settings = {
     OriginalProps = {}
 }
 
--- 3. FILTRO DE JOGADORES (NÃO CONFUNDIR AVATARES COM A BOLA)
+-- 3. FILTRO DE JOGADORES
 local function isPlayerPart(part)
     local model = part:FindFirstAncestorOfClass("Model")
     if model and model:FindFirstChildOfClass("Humanoid") then
@@ -41,34 +42,30 @@ local function isPlayerPart(part)
     return false
 end
 
--- 4. LOCALIZADOR DINÂMICO DA BOLA DO TF26 (TAMANHO NATIVO 2.5)
+-- 4. LOCALIZADOR DA BOLA REAL (TAMANHO 2.5)
 local function getTF26Ball()
-    -- 1º: Procura no Workspace direto
     for _, obj in ipairs(Workspace:GetChildren()) do
         if obj:IsA("BasePart") and not obj.Anchored and not isPlayerPart(obj) then
-            local isStandardSize = (obj.Size - Vector3.new(2.5, 2.5, 2.5)).Magnitude < 0.15
+            local isStandard = (obj.Size - Vector3.new(2.5, 2.5, 2.5)).Magnitude < 0.2
             local isTracked = Settings.OriginalProps[obj] ~= nil
-            if isStandardSize or isTracked then
+            if isStandard or isTracked then
                 return obj
             end
         end
     end
-
-    -- 2º: Procura profunda em subpastas caso a bola tenha sido agrupada
     for _, obj in ipairs(Workspace:GetDescendants()) do
         if obj:IsA("BasePart") and not obj.Anchored and not isPlayerPart(obj) then
-            local isStandardSize = (obj.Size - Vector3.new(2.5, 2.5, 2.5)).Magnitude < 0.15
+            local isStandard = (obj.Size - Vector3.new(2.5, 2.5, 2.5)).Magnitude < 0.2
             local isTracked = Settings.OriginalProps[obj] ~= nil
-            if isStandardSize or isTracked then
+            if isStandard or isTracked then
                 return obj
             end
         end
     end
-
     return nil
 end
 
--- 5. CLONE VISUAL ESTÉTICO (DISFARCE PARA NINGUÉM VER A BOLA GIGANTE)
+-- 5. GESTÃO DO CLONE VISUAL (ISOLADO NA CÂMARA LOCAL)
 local fakeBall = nil
 
 local function cleanupFakeBall()
@@ -83,13 +80,12 @@ local function restoreBall(ball)
         local p = Settings.OriginalProps[ball]
         ball.Size = p.Size
         ball.Transparency = p.Transparency
-        ball.CanCollide = p.CanCollide
         Settings.OriginalProps[ball] = nil
     end
     cleanupFakeBall()
 end
 
--- 6. CICLO PRINCIPAL DA HITBOX INVISÍVEL
+-- 6. CICLO SEGURO DA HITBOX INVISÍVEL
 RunService.RenderStepped:Connect(function()
     if not Settings.HitboxActive then return end
 
@@ -99,38 +95,39 @@ RunService.RenderStepped:Connect(function()
         return
     end
 
-    -- Guarda os parâmetros originais para restauração
+    -- Guarda os valores de fábrica
     if not Settings.OriginalProps[ball] then
         Settings.OriginalProps[ball] = {
             Size = Vector3.new(2.5, 2.5, 2.5),
-            Transparency = ball.Transparency,
-            CanCollide = ball.CanCollide
+            Transparency = ball.Transparency
         }
     end
 
-    -- Cria o clone com a textura e tamanho normal (2.5)
-    if not fakeBall or fakeBall.Parent ~= Workspace then
+    -- Cria o clone dentro da Camera para isolá-lo das varreduras do jogo
+    if not fakeBall or fakeBall.Parent ~= Camera then
+        cleanupFakeBall()
         fakeBall = ball:Clone()
-        fakeBall.Name = "TexHub_TF26_Cosmetic"
+        fakeBall.Name = "TexHub_SafeVisual"
         fakeBall.CanCollide = false
         fakeBall.Anchored = true
         fakeBall.CastShadow = false
+        
+        -- Remove scripts ou transmissores do clone
         for _, c in ipairs(fakeBall:GetDescendants()) do
             if c:IsA("LuaSourceContainer") or c:IsA("TouchTransmitter") then
                 c:Destroy()
             end
         end
-        fakeBall.Parent = Workspace
+        fakeBall.Parent = Camera
     end
 
-    -- Sincroniza a posição da bola visual com a bola verdadeira
+    -- Acompanha a posição real da bola
     fakeBall.Size = Vector3.new(2.5, 2.5, 2.5)
     fakeBall.CFrame = ball.CFrame
     fakeBall.Transparency = 0
 
-    -- Expande a área real de toque da bola
+    -- Expande a área de toque da bola original
     ball.Size = Vector3.new(Settings.HitboxSize, Settings.HitboxSize, Settings.HitboxSize)
-    ball.CanCollide = false
 
     if Settings.ShowHitboxRadius then
         ball.Transparency = 0.65
@@ -140,7 +137,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- 7. REFORÇO: TOQUE FÍSICO MAGNÉTICO (AUTO-TACKLE & REACH)
+-- 7. DIVIDIDA E TOQUE MAGNÉTICO (AUTO TACKLE)
 RunService.Heartbeat:Connect(function()
     if not Settings.AutoTouchMagnet then return end
 
@@ -151,21 +148,19 @@ RunService.Heartbeat:Connect(function()
 
     local dist = (ball.Position - hrp.Position).Magnitude
     if dist <= Settings.MagnetRange then
-        local leg = char:FindFirstChild("Right Leg") or char:FindFirstChild("RightFoot") or hrp
+        local rightLeg = char:FindFirstChild("Right Leg") or char:FindFirstChild("RightFoot") or hrp
         pcall(function()
-            firetouchinterest(leg, ball, 0)
+            firetouchinterest(rightLeg, ball, 0)
             task.wait()
-            firetouchinterest(leg, ball, 1)
+            firetouchinterest(rightLeg, ball, 1)
         end)
     end
 end)
 
--- 8. CONSTRUÇÃO DA INTERFACE
+-- 8. INTERFACE GRÁFICA
 local TabHitbox = Window:CreateTab("Hitbox Bola")
 local TabPlayer = Window:CreateTab("Jogador")
-local TabAjustes = Window:CreateTab("Ajustes")
 
--- Aba 1: Hitbox da Bola
 TabHitbox:AddToggle("Hitbox Invisível da Bola", false, function(active)
     Settings.HitboxActive = active
     if not active then
@@ -174,19 +169,19 @@ TabHitbox:AddToggle("Hitbox Invisível da Bola", false, function(active)
     end
 end)
 
-TabHitbox:AddSlider("Tamanho da Hitbox (Studs)", 4, 30, 14, function(val)
+TabHitbox:AddSlider("Tamanho da Hitbox (Studs)", 4, 25, 12, function(val)
     Settings.HitboxSize = val
 end)
 
-TabHitbox:AddToggle("Toque Magnético Automático", true, function(active)
+TabHitbox:AddToggle("Auto Dividida Magnética (Tackle)", true, function(active)
     Settings.AutoTouchMagnet = active
 end)
 
-TabHitbox:AddSlider("Distância do Toque", 4, 25, 12, function(val)
+TabHitbox:AddSlider("Alcance da Dividida", 4, 20, 10, function(val)
     Settings.MagnetRange = val
 end)
 
-TabHitbox:AddToggle("Visualizar Esfera (Debug)", false, function(active)
+TabHitbox:AddToggle("Visualizar Raio (Debug)", false, function(active)
     Settings.ShowHitboxRadius = active
 end)
 
@@ -195,20 +190,19 @@ TabHitbox:AddButton("Restaurar Bola ao Normal", function()
     if ball then restoreBall(ball) end
 end)
 
--- Aba 2: Jogador
-TabPlayer:AddSlider("Velocidade", 16, 70, 16, function(val)
+TabPlayer:AddSlider("Velocidade", 16, 65, 16, function(val)
     Settings.WalkSpeed = val
     local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if hum then hum.WalkSpeed = val end
 end)
 
-TabPlayer:AddSlider("Força do Salto", 50, 150, 50, function(val)
+TabPlayer:AddSlider("Poder do Salto", 50, 150, 50, function(val)
     Settings.JumpPower = val
     local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if hum then hum.JumpPower = val end
 end)
 
-TabPlayer:AddToggle("Pulo Infinito (Aéreo)", false, function(active)
+TabPlayer:AddToggle("Pulo Infinito", false, function(active)
     Settings.InfJump = active
 end)
 
@@ -217,17 +211,4 @@ UserInputService.JumpRequest:Connect(function()
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
-end)
-
--- Aba 3: Ajustes
-TabAjustes:AddButton("Anti-Lag (Modo Fluido)", function()
-    pcall(function()
-        for _, v in ipairs(Workspace:GetDescendants()) do
-            if v:IsA("BasePart") and not v.Name:lower():find("ball") then
-                v.Material = Enum.Material.SmoothPlastic
-            elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
-                v.Lifetime = NumberRange.new(0)
-            end
-        end
-    end)
 end)
